@@ -1,0 +1,80 @@
+#!/bin/bash
+
+usage() {
+    echo "Usage: $0 <mode=run/asm> <collision=0/1> [core_id=VALUE] [perf_cts=VALUE]"
+}
+
+if [ "$#" -lt 1 ]; then
+    usage
+    echo "Using default values"
+    # exit 1
+fi
+
+#default value
+mode="run"
+core_id=0
+perf_cts=320,211,206,219
+collision=1
+
+for arg in "$@"; do
+    key=$(echo $arg | cut -f1 -d=)
+    value=$(echo $arg | cut -f2 -d=)
+
+    case $key in
+        mode)
+            if [[ "$value" == "run" || "$value" == "asm" ]]; then
+                mode=$value
+            else
+                echo "Error: mode must be one of 'run' or 'asm'."
+                usage
+                exit 1
+            fi
+            ;;
+	collision)
+	    if [[ "$value" == "0" || "$value" == "1" ]]; then
+		collision=$value
+	    else
+		echo "Error: collision must be one of '0' or '1'."
+		usage
+		exit 1
+	    fi
+	    ;;
+        core_id)
+            core_id=$value
+            ;;
+        perf_cts)
+            perf_cts=$value
+            ;;
+        *)
+            echo "Warning: Ignoring unrecognized option '$key'."
+            ;;
+    esac
+done
+
+collision=$((1 - collision))
+
+if [[ "$mode" == "run" ]]; then
+    output_file=results.out
+else
+    output_file=test.asm
+fi
+
+(cd ../../.. && . vars.sh)
+g++ -O2 -c -m64 -oa64.o ../../../PMCTestA.cpp
+nasm -f elf64 -o b64.o -i../../.. \
+    -Dcounters=$perf_cts \
+    -Dcollision=$collision \
+    -Pspeculative_ibp.nasm \
+    ../../../TemplateB64.nasm
+g++ -g -no-pie -flto -m64 a64.o b64.o -ox_test -lpthread
+
+if [[ "$mode" == "run" ]]; then
+    echo "Performing run mode operations..."
+    echo -e "\n@   repeat1: $repeat1_input" >> $output_file
+    echo -e "\n@@   Clock     L2_Miss     BrClear     BrMispInd     BrMispCon" > $output_file
+    taskset -c $core_id ./x_test >> $output_file
+    cat $output_file
+else
+    echo "Performing asm mode operations..."
+    objdump -d ./x_test > $output_file
+fi

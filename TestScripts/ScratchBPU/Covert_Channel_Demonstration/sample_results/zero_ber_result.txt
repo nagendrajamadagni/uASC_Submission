@@ -1,0 +1,36 @@
+layout OK: critical symbols aligned; indirect calls 0x450051 / 0x460051 alias on low 16 bits
+Disabling prefetchers on core 2 (MSR 0x1a4: 0x0 -> 0x2f)
+Core: 2 | payload: 1024 bytes | rounds/byte: 3 | total rounds: 3072
+Transmitter log: writer.log
+------------------------------------------------------------
+
+PoC: Reader (receiver)
+----------------------------
+payload      : 1024 bytes (seed 0x00c0ffee)
+rounds/byte  : 3
+  64/1024 bytes  (0.0 s elapsed, ~0 s left)     128/1024 bytes  (0.1 s elapsed, ~0 s left)     192/1024 bytes  (0.1 s elapsed, ~0 s left)     256/1024 bytes  (0.1 s elapsed, ~0 s left)     320/1024 bytes  (0.1 s elapsed, ~0 s left)     384/1024 bytes  (0.2 s elapsed, ~0 s left)     448/1024 bytes  (0.2 s elapsed, ~0 s left)     512/1024 bytes  (0.2 s elapsed, ~0 s left)     576/1024 bytes  (0.2 s elapsed, ~0 s left)     640/1024 bytes  (0.3 s elapsed, ~0 s left)     704/1024 bytes  (0.3 s elapsed, ~0 s left)     768/1024 bytes  (0.3 s elapsed, ~0 s left)     832/1024 bytes  (0.4 s elapsed, ~0 s left)     896/1024 bytes  (0.4 s elapsed, ~0 s left)     960/1024 bytes  (0.4 s elapsed, ~0 s left)     1024/1024 bytes  (0.4 s elapsed, ~0 s left)   
+
+first 16 bytes sent : 3b 96 a1 c1 50 59 b2 65 92 24 ca 04 f0 17 9f e3 
+first 16 bytes recvd: 3b 96 a1 c1 50 59 b2 65 92 24 ca 04 f0 17 9f e3 
+
+=== Covert Channel Measurement ===
+payload             : 1024 bytes (8192 bits)
+rounds per byte     : 3
+total rounds        : 3072
+wall time           : 0.443 s
+
+--- Bandwidth ---
+throughput          : 18483.09 bit/s  (2310.39 B/s)
+time per byte       : 0.433 ms
+time per round      : 0.144 ms
+
+--- Accuracy ---
+bit errors          : 0 / 8192   (BER = 0.0000e+00)
+byte errors         : 0 / 1024   (byte error rate = 0.0000e+00)
+bytes with no signal: 0
+mean decode margin  : 3.0 hits (top1 - top2, of 3 rounds)
+
+RESULT,bytes=1024,repeat=3,seconds=0.443216,bits_per_sec=18483.0896,ber=0.000000e+00,byte_er=0.000000e+00,no_signal=0
+------------------------------------------------------------
+Receiver output saved to results_covert_channel.txt
+Restoring MSR 0x1a4 on core 2 to 0x0

@@ -1,0 +1,41 @@
+# Build artifacts.
+#
+# Every pattern below names a file the repo's own scripts regenerate, so none
+# of it needs to ship with the submission. Curated reference output --
+# sample_results/*.out and reference_data/ -- is deliberately NOT covered here.
+
+# Object files, static libraries, kernel modules.
+# a64.o / b64.o / a32.o are rebuilt unconditionally by each experiment's
+# run.sh (g++ -c, then nasm) before every run.
+*.o
+*.a
+*.ko
+*.mod
+*.mod.c
+
+# kbuild metadata, DriverSrcLinux/. install.sh runs `make clean && make`, so
+# the checked-in module is deleted before it is ever used -- and a .ko is
+# kernel-version locked (ours says vermagic 6.12.10-76061203-generic), so it
+# would not load on a reviewer's machine regardless.
+.*.cmd
+Module.symvers
+modules.order
+
+# Linked test executables, produced by the final ld step of each run.sh.
+x_test
+x_test_p0
+x_test_p1
+x_victim
+x_attacker
+
+# Rebuilt by TestScripts/init.sh whenever it is missing or older than
+# cpugetinfo.cpp.
+/TestScripts/cpugetinfo
+
+# Run transcripts, overwritten on each run. Scoped to these two shapes rather
+# than a blanket *.out so that sample_results/*.out stays tracked.
+results.out
+**/bin/*.out
+
+__pycache__/
+*.pyc

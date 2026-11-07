@@ -1,0 +1,12 @@
+Experiment date and time: Sat May  2 05:06:45 PM PDT 2026
+Basic options - core_id: 1, perf_cts: 320,205,206, output_file: results.csv
+
+   Clock     L2_Miss     BrIndir     BrMispInd
+base address for shared memory is: 0x7bbeb2d06000 and 0x7bbeb2cc6000
+the initial values of the shared memory region are 1 and 0
+
+-1718044189      21333     120880      15441 
+
+Custom PMCounter results:
+    408234       1000          0          0 
+

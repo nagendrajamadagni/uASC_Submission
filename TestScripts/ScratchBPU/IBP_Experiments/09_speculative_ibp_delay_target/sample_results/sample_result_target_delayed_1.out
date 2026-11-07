@@ -1,0 +1,8 @@
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 408807102      51000     227000      17515      18470 
+
+Custom PMCounter results:
+   2542852       1000       2000        999       1000 
+

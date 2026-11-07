@@ -1,0 +1,100 @@
+--- Run number_of_reads=1 | Wed Apr 29 05:28:58 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 386034897       1013     121000       6276      31515 
+
+Custom PMCounter results:
+    183345        300          0          0          0 
+
+--- Run number_of_reads=2 | Wed Apr 29 05:28:59 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 405655037       1720     122000       7261      29981 
+
+Custom PMCounter results:
+    436308        942          0          0          0 
+
+--- Run number_of_reads=3 | Wed Apr 29 05:29:00 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 403797417       1366     123000       8024      32359 
+
+Custom PMCounter results:
+    404249        990          0          0          0 
+
+--- Run number_of_reads=4 | Wed Apr 29 05:29:01 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 412568904       1456     124000       8477      32038 
+
+Custom PMCounter results:
+    396489        996          0          0          0 
+
+--- Run number_of_reads=5 | Wed Apr 29 05:29:01 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 421990025       1086     125000       8112      27978 
+
+Custom PMCounter results:
+    415833       1000          0          0          0 
+
+--- Run number_of_reads=6 | Wed Apr 29 05:29:02 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 429815830       2010     126000       9059      32882 
+
+Custom PMCounter results:
+    407948       1000          0          0          0 
+
+--- Run number_of_reads=7 | Wed Apr 29 05:29:03 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 436061475       1037     127000       8062      29711 
+
+Custom PMCounter results:
+    404463       1000          0          0          0 
+
+--- Run number_of_reads=8 | Wed Apr 29 05:29:04 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 442028134       1476     128000       8526      32640 
+
+Custom PMCounter results:
+    399370       1000          0          0          0 
+
+--- Run number_of_reads=9 | Wed Apr 29 05:29:05 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 453988972       1060     129000       8079      31113 
+
+Custom PMCounter results:
+    398530       1000          0          0          0 
+
+--- Run number_of_reads=10 | Wed Apr 29 05:29:06 PM PDT 2026 ---
+Performing run mode operations...
+
+@@   Clock     L2_Miss     BrIndir     BrMispInd     BrMispCon
+
+ 462542538       1451     130000       8445      33366 
+
+Custom PMCounter results:
+    416695       1000          0          0          0 
+
