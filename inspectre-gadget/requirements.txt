@@ -1,0 +1,4 @@
+angr>=9.2.172
+PyYAML
+pandas
+tabulate

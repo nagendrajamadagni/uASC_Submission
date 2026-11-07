@@ -1,0 +1,33 @@
+\begin{table*}[h]
+\small\centering
+\caption{Secret-At-Dispatch (SAD) gadgets found in OpenSSL \texttt{libcrypto.so.3} across GCC optimization levels O0--O3 at \texttt{MaxBB=10}. Grouped names (\texttt{.../\_ex}) denote variants sharing an identical register layout and set of optimization levels. \texttt{CAST\_set\_key} exceeded the per-entry analysis budget at O2/O3 and is omitted.}
+\label{tab:sad_gadgets}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Function} & \textbf{Secret (Registers)} & \textbf{Optimization Levels} \\ \midrule
+\texttt{SRP\_Calc\_x/\_ex} & Password (\texttt{rdx}, \texttt{r13}) & O1, O2, O3 \\
+\texttt{SRP\_create\_verifier\_ex} & Password (\texttt{rdx}, \texttt{rax}, \texttt{r13}) & O1, O2, O3 \\
+\texttt{SRP\_create\_verifier\_BN/\_BN\_ex} & Password (\texttt{r13}) & O1 \\
+\texttt{SRP\_create\_verifier} & Password (\texttt{r13}) & O3 \\
+\texttt{CMS\_decrypt\_set1\_password} & Password (\texttt{rdi}, \texttt{rsi}, \texttt{rdx}, \texttt{rbx}, \texttt{rbp}) & O0, O1, O2, O3 \\
+\texttt{EVP\_MAC\_init} & MAC key (\texttt{rdi}, \texttt{rsi}, \texttt{r8}, \texttt{rax}) & O0, O1, O2, O3 \\
+\texttt{HMAC} & HMAC key (\texttt{rsi}, \texttt{rbx}) & O0, O1, O2, O3 \\
+\texttt{HMAC\_Init/\_ex} & HMAC key (\texttt{rsi}, \texttt{rbx}, \texttt{r13}, \texttt{r14}, \texttt{r15}) & O0, O1, O2, O3 \\
+\texttt{EVP\_EncryptInit\_ex/\_DecryptInit\_ex} & Cipher key (\texttt{rdi}, \texttt{rcx}, \texttt{rax}, \texttt{rbx}) & O0, O1, O2, O3 \\
+\texttt{EVP\_CipherInit\_ex} & Cipher key (\texttt{rdi}, \texttt{rcx}, \texttt{rax}, \texttt{rbx}, \texttt{r13}, \texttt{r14}) & O0, O1, O2, O3 \\
+\texttt{DES\_string\_to\_key} & Password (\texttt{rdi}, \texttt{rbx}, \texttt{rbp}) & O1, O2, O3 \\
+\texttt{DES\_string\_to\_2keys} & Password (\texttt{rdi}, \texttt{r12}) & O1, O2, O3 \\
+\texttt{PKCS5\_PBKDF2\_HMAC} & Password (\texttt{rdi}, \texttt{rax}, \texttt{r12}, \texttt{r13}) & O0, O1, O2, O3 \\
+\texttt{PKCS5\_PBE\_keyivgen/\_ex} & Password (\texttt{rsi}, \texttt{rax}, \texttt{r12}, \texttt{r13}) & O0, O1, O2, O3 \\
+\texttt{EVP\_PBE\_CipherInit/\_ex} & Password (\texttt{rsi}, \texttt{rdx}, \texttt{rax}, \texttt{rbx}, \texttt{rbp}) & O0, O1, O2, O3 \\
+\texttt{EVP\_PBE\_scrypt/\_ex} & Password (\texttt{rdi}, \texttt{rbp}) & O0, O1, O2, O3 \\
+\texttt{PKCS8\_encrypt/\_ex} & Passphrase (\texttt{rdx}, \texttt{rbp}, \texttt{r15}) & O0, O1, O2, O3 \\
+\texttt{PKCS12\_key\_gen\_asc/\_asc\_ex} & Password (\texttt{rdi}, \texttt{rax}, \texttt{rbx}, \texttt{r13}) & O0, O1, O2, O3 \\
+\texttt{PKCS12\_key\_gen\_utf8/\_utf8\_ex} & Password (\texttt{rdi}, \texttt{rax}, \texttt{rbx}, \texttt{rbp}, \texttt{r13}) & O0, O1, O2, O3 \\
+\texttt{PKCS12\_key\_gen\_uni/\_uni\_ex} & Password (\texttt{rdi}, \texttt{r13}) & O0, O2, O3 \\
+\texttt{PKCS12\_gen\_mac} & Password (\texttt{rdi}, \texttt{rsi}, \texttt{rdx}, \texttt{rax}, \texttt{rbx}, \texttt{rbp}) & O0, O1, O2, O3 \\
+\texttt{EVP\_PKEY\_new\_raw\_private\_key} & Ed25519/X25519 private key (\texttt{r9}, \texttt{r13}, \texttt{r14}) & O0, O1, O2, O3 \\
+\texttt{EVP\_PKEY\_new\_raw\_private\_key\_ex} & Ed25519/X25519 private key (\texttt{rcx}, \texttt{r9}, \texttt{r12}, \texttt{r14}) & O0, O1, O2, O3 \\
+\bottomrule
+\end{tabular}
+\end{table*}

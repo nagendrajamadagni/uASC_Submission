@@ -1,0 +1,844 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenSSL SAD Gadget Report — GCC, MaxBB=10</title><style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #21253a;
+    --border: #2e3347;
+    --text: #e2e8f0;
+    --muted: #7b8098;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+    --t1: #ef4444; --t1bg: #2d1515; --t1b: #7f1d1d;
+    --t2: #f97316; --t2bg: #2d1a0e; --t2b: #7c2d12;
+    --t3: #eab308; --t3bg: #2a2108; --t3b: #713f12;
+    --t4: #3b82f6; --t4bg: #0f1f3d; --t4b: #1e3a5f;
+    --t5: #a855f7; --t5bg: #1e102d; --t5b: #4c1d95;
+
+    --o0: #6366f1; --o1: #22c55e; --o2: #f59e0b; --o3: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    background: linear-gradient(135deg, #1a1d27 0%, #12141e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 48px 32px;
+  }
+  .page-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .page-header .subtitle { color: var(--muted); margin-top: 6px; font-size: 13px; }
+  .meta { display: flex; gap: 32px; margin-top: 24px; }
+  .meta-item { display: flex; flex-direction: column; }
+  .meta-item .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .meta-item .value { font-size: 28px; font-weight: 700; margin-top: 2px; }
+
+  /* ── Build summary cards ── */
+  .build-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 28px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .build-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .build-card .build-name { font-size: 13px; font-weight: 600; font-family: var(--mono); }
+  .build-card .build-count { font-size: 32px; font-weight: 700; margin-top: 6px; }
+  .build-card .build-label { font-size: 11px; color: var(--muted); }
+  .build-card .build-fns { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ── Main content ── */
+  .content { padding: 32px 48px 64px; max-width: 1400px; }
+
+  /* ── Tier sections ── */
+  .tier-section { margin-bottom: 48px; }
+  .tier-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tier-badge {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .tier-header h2 { font-size: 18px; font-weight: 600; }
+  .tier-header .tier-desc { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+  .t1 .tier-badge { background: var(--t1bg); color: var(--t1); border: 1px solid var(--t1b); }
+  .t2 .tier-badge { background: var(--t2bg); color: var(--t2); border: 1px solid var(--t2b); }
+  .t3 .tier-badge { background: var(--t3bg); color: var(--t3); border: 1px solid var(--t3b); }
+  .t4 .tier-badge { background: var(--t4bg); color: var(--t4); border: 1px solid var(--t4b); }
+  .t5 .tier-badge { background: var(--t5bg); color: var(--t5); border: 1px solid var(--t5b); }
+
+  /* ── Gadget cards ── */
+  .gadget-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .gadget-card .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 24px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .gadget-card .card-top:hover { background: var(--surface2); }
+  .gadget-card .fn-name {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .gadget-card .fn-sig {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    word-break: break-all;
+  }
+  .gadget-card .secret-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #1e2635;
+    border: 1px solid #2a3650;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-top: 6px;
+    margin-right: 6px;
+  }
+  .secret-pill .reg { color: #67e8f9; font-weight: 700; }
+  .secret-pill .arrow { color: var(--muted); }
+  .secret-pill .desc { color: var(--text); }
+  .card-meta { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+  .build-badges { display: flex; gap: 6px; }
+  .build-badge {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--mono);
+    padding: 3px 8px;
+    border-radius: 4px;
+    opacity: 0.3;
+  }
+  .build-badge.active { opacity: 1; }
+  .bb-O0 { background: #1e1f50; color: var(--o0); border: 1px solid #3730a3; }
+  .bb-O1 { background: #052e16; color: var(--o1); border: 1px solid #166534; }
+  .bb-O2 { background: #2d1e05; color: var(--o2); border: 1px solid #92400e; }
+  .bb-O3 { background: #2d0e0e; color: var(--o3); border: 1px solid #991b1b; }
+  .expand-icon { color: var(--muted); font-size: 12px; margin-top: 2px; transition: transform 0.2s; }
+  .gadget-card.open .expand-icon { transform: rotate(180deg); }
+
+  .card-body {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding: 0;
+  }
+  .gadget-card.open .card-body { display: block; }
+
+  /* ── Two-column layout inside card body ── */
+  .card-body-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .body-col { padding: 20px 24px; }
+  .body-col:first-child { border-right: 1px solid var(--border); }
+  .body-col h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* ── Dispatch info ── */
+  .dispatch-box {
+    background: #0d1017;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .dispatch-box .dispatch-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .dispatch-box .dispatch-instr {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #fbbf24;
+  }
+  .dispatch-box .dispatch-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── Registers table ── */
+  .reg-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .reg-table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .reg-table td {
+    font-size: 12px;
+    padding: 8px 8px;
+    border-bottom: 1px solid #1e2235;
+    vertical-align: top;
+  }
+  .reg-table tr:last-child td { border-bottom: none; }
+  .reg-name { font-family: var(--mono); color: #67e8f9; font-weight: 700; }
+  .reg-depth { font-family: var(--mono); color: var(--muted); font-size: 11px; }
+  .reg-source { font-family: var(--mono); font-size: 11px; color: #a78bfa; }
+  .reg-meaning { color: var(--text); font-size: 12px; }
+
+  /* ── Disassembly ── */
+  .asm-block {
+    background: #0a0c12;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    overflow-x: auto;
+  }
+  .asm-line { display: flex; gap: 12px; line-height: 1.7; }
+  .asm-addr { color: #4b5563; flex-shrink: 0; width: 58px; }
+  .asm-bytes { color: #374151; flex-shrink: 0; width: 130px; }
+  .asm-op { color: #93c5fd; flex-shrink: 0; width: 52px; }
+  .asm-args { color: #d1d5db; flex: 1; }
+  .asm-comment { color: #4ade80; font-style: italic; }
+  .asm-line.highlight-spill .asm-op,
+  .asm-line.highlight-spill .asm-args { color: #fde68a; }
+  .asm-line.highlight-spill .asm-comment { color: #86efac; }
+  .asm-line.highlight-dispatch {
+    background: #1a1000;
+    border-radius: 4px;
+    padding: 0 4px;
+    margin: 0 -4px;
+  }
+  .asm-line.highlight-dispatch .asm-op,
+  .asm-line.highlight-dispatch .asm-args { color: #fbbf24; font-weight: 700; }
+  .asm-line.highlight-dispatch .asm-comment { color: #fcd34d; }
+  .asm-ellipsis { color: #374151; padding: 2px 0; font-size: 11px; }
+
+  /* ── Impact section ── */
+  .impact-box {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #cbd5e1;
+  }
+  .impact-box strong { color: var(--text); }
+
+  /* ── Paths note ── */
+  .paths-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #12141e;
+    border-radius: 6px;
+    border-left: 3px solid var(--border);
+  }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 48px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+.build-cards{grid-template-columns:repeat(4,1fr);}
+.bb-O0{background:#1e1f50;color:var(--o0);border:1px solid #3730a3;} .bb-O1{background:#052e16;color:var(--o1);border:1px solid #166534;}
+.bb-O2{background:#2d1e05;color:var(--o2);border:1px solid #92400e;} .bb-O3{background:#2d0e0e;color:var(--o3);border:1px solid #991b1b;}
+.build-badge{font-size:10px;} .gcount{font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap;}
+.card-meta{display:flex;align-items:center;gap:14px;}
+.skip{font-size:10px;color:#f59e0b;border:1px solid #7c2d12;border-radius:10px;padding:1px 7px;margin-left:8px;font-family:var(--mono);}
+.tc{color:#67e8f9;}
+.matrix{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono);}
+.matrix th{text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);}
+.matrix td{padding:6px 10px;border-bottom:1px solid #23283a;} .matrix .y{color:#22c55e;font-weight:700;} .matrix .n{color:#3f4457;} .matrix .s{color:#f59e0b;}
+.matrix tr:hover{background:var(--surface2);}
+</style></head><body>
+<div class="page-header"><h1>OpenSSL libcrypto.so.3 — SAD Gadget Report</h1>
+<div class="subtitle">Secret-At-Dispatch gadgets via InSpectre · GCC O0/O1/O2/O3 · <b>MaxBB = 10</b></div>
+<div class="meta">
+<div class="meta-item"><span class="label">Gadget instances</span><span class="value" style="color:#ef4444">264</span></div>
+<div class="meta-item"><span class="label">Unique functions</span><span class="value" style="color:#f97316">34</span></div>
+<div class="meta-item"><span class="label">Builds</span><span class="value" style="color:#22c55e">4</span></div>
+<div class="meta-item"><span class="label">Depth budget</span><span class="value" style="color:#a855f7">MaxBB 10</span></div>
+</div></div>
+<div class="build-cards"><div class="build-card"><div class="build-name" style="color:var(--o0)">gcc -O0</div><div class="build-count" style="color:var(--o0)">43</div><div class="build-label">gadget instances</div><div class="build-fns">26 unique functions</div></div><div class="build-card"><div class="build-name" style="color:var(--o1)">gcc -O1</div><div class="build-count" style="color:var(--o1)">72</div><div class="build-label">gadget instances</div><div class="build-fns">31 unique functions</div></div><div class="build-card"><div class="build-name" style="color:var(--o2)">gcc -O2</div><div class="build-count" style="color:var(--o2)">70</div><div class="build-label">gadget instances</div><div class="build-fns">31 unique functions</div></div><div class="build-card"><div class="build-name" style="color:var(--o3)">gcc -O3</div><div class="build-count" style="color:var(--o3)">79</div><div class="build-label">gadget instances</div><div class="build-fns">32 unique functions</div></div></div>
+<div class="content">
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:24px">
+<p style="color:#cbd5e1;font-size:13px;line-height:1.8">Analysis at basic-block budget <code>MaxBB=10</code> (double the default). Each function's documented secret pointer is pre-seeded at entry; the tool reports every indirect branch reached while a secret or secret-derived register is live. <b>CAST_set_key</b> exceeded the 300&nbsp;s per-entry cap at O2/O3 (path explosion) and is marked <span class="skip">timed out</span> — that is “not analyzed,” not “no gadget.” PLT stubs are counted as indirect branches. At <code>MaxBB=5</code> the same GCC sweep found 57 instances across 15 functions; deepening to 10 yields 264 across 34.</p>
+</div>
+<div class="tier-section t1"><div class="tier-header"><span class="tier-badge">Tier 1</span><h2>Passphrase / low-entropy secrets — partial leak often enough</h2></div>
+  <div class="gadget-card" id="SRP_Calc_x_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">SRP_Calc_x_ex </div>
+        <div class="fn-sig">rdx = raw password string (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">21 gadgets · 3/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0x1f24a1</div>
+          <div class="dispatch-instr">call/jmp *%rax</div><div class="dispatch-note">register-indirect dispatch via <code>%rax</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe1c24 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:malloc@plt]</div><div class="dispatch-note">PLT indirect jump — <code>malloc@plt</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #3 @ 0xe2034 · 4 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS5_PBE_keyivgen_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS5_PBE_keyivgen_ex </div>
+        <div class="fn-sig">rsi = raw password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">18 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4 · 5 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rax</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rsi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="SRP_Calc_x">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">SRP_Calc_x </div>
+        <div class="fn-sig">rdx = raw password string (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">15 gadgets · 3/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0x1f24a1</div>
+          <div class="dispatch-instr">call/jmp *%rax</div><div class="dispatch-note">register-indirect dispatch via <code>%rax</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe2034 · 4 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS12_gen_mac">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS12_gen_mac </div>
+        <div class="fn-sig">rsi = password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">13 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034 · 3 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">2</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rbp</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">3</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">3</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS5_PBE_keyivgen">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS5_PBE_keyivgen </div>
+        <div class="fn-sig">rsi = raw password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">10 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4 · 3 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rax</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rsi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="CMS_decrypt_set1_password">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">CMS_decrypt_set1_password </div>
+        <div class="fn-sig">rsi = password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">10 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034 · 3 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rbp</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">2</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">2</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="EVP_PBE_CipherInit">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_PBE_CipherInit </div>
+        <div class="fn-sig">rsi = raw password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">9 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbp</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="EVP_PBE_CipherInit_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_PBE_CipherInit_ex </div>
+        <div class="fn-sig">rsi = raw password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">9 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbp</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS5_PBKDF2_HMAC">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS5_PBKDF2_HMAC </div>
+        <div class="fn-sig">rdi = raw password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">8 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1d64 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rax</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS8_encrypt">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS8_encrypt </div>
+        <div class="fn-sig">rdx = passphrase (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">8 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rbp</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS8_encrypt_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS8_encrypt_ex </div>
+        <div class="fn-sig">rdx = passphrase (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">8 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rbp</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS12_key_gen_asc_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS12_key_gen_asc_ex </div>
+        <div class="fn-sig">rdi = ASCII password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">8 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe1d64</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #3 @ 0xe2034</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rbx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS12_key_gen_asc">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS12_key_gen_asc </div>
+        <div class="fn-sig">rdi = ASCII password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">6 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1d64</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe2034</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS12_key_gen_utf8">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS12_key_gen_utf8 </div>
+        <div class="fn-sig">rdi = UTF-8 password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">6 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1d64</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe2034</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS12_key_gen_utf8_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS12_key_gen_utf8_ex </div>
+        <div class="fn-sig">rdi = UTF-8 password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">6 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1d64</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe2034</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS12_key_gen_uni_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS12_key_gen_uni_ex </div>
+        <div class="fn-sig">rdi = Unicode password bytes (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">6 gadgets · 3/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="EVP_PBE_scrypt">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_PBE_scrypt </div>
+        <div class="fn-sig">rdi = raw password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">5 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbp</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="EVP_PBE_scrypt_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_PBE_scrypt_ex </div>
+        <div class="fn-sig">rdi = raw password (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">5 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbp</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="SRP_create_verifier_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">SRP_create_verifier_ex </div>
+        <div class="fn-sig">rsi = raw password string (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">4 gadgets · 3/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1d64</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rax</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdx</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="PKCS12_key_gen_uni">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">PKCS12_key_gen_uni </div>
+        <div class="fn-sig">rdi = Unicode password bytes (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">4 gadgets · 3/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="SRP_create_verifier_BN">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">SRP_create_verifier_BN </div>
+        <div class="fn-sig">rsi = raw password string (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2">O2</span><span class="build-badge bb-O3">O3</span></div>
+        <span class="gcount">3 gadgets · 1/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0x1e9dee</div>
+          <div class="dispatch-instr">call/jmp *%rax</div><div class="dispatch-note">register-indirect dispatch via <code>%rax</code> · rep. build gcc -O1</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe1c34 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:malloc@plt]</div><div class="dispatch-note">PLT indirect jump — <code>malloc@plt</code> · rep. build gcc -O1</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="SRP_create_verifier_BN_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">SRP_create_verifier_BN_ex </div>
+        <div class="fn-sig">rsi = raw password string (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2">O2</span><span class="build-badge bb-O3">O3</span></div>
+        <span class="gcount">3 gadgets · 1/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0x1e9dee</div>
+          <div class="dispatch-instr">call/jmp *%rax</div><div class="dispatch-note">register-indirect dispatch via <code>%rax</code> · rep. build gcc -O1</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe1c34 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:malloc@plt]</div><div class="dispatch-note">PLT indirect jump — <code>malloc@plt</code> · rep. build gcc -O1</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="DES_string_to_key">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">DES_string_to_key </div>
+        <div class="fn-sig">rdi = password string (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">3 gadgets · 3/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1d64</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="DES_string_to_2keys">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">DES_string_to_2keys </div>
+        <div class="fn-sig">rdi = password string (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">3 gadgets · 3/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1d64</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r12</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="SRP_create_verifier">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">SRP_create_verifier </div>
+        <div class="fn-sig">rsi = raw password string (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0">O0</span><span class="build-badge bb-O1">O1</span><span class="build-badge bb-O2">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">1 gadgets · 1/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe19c4</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strcmp@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strcmp@plt</code> · rep. build gcc -O3</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div></div><div class="tier-section t2"><div class="tier-header"><span class="tier-badge">Tier 2</span><h2>Authentication / MAC keys — forgery on leak</h2></div>
+  <div class="gadget-card" id="HMAC_Init">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">HMAC_Init </div>
+        <div class="fn-sig">rsi = raw HMAC key bytes (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">12 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034 · 3 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rsi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r15</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="HMAC_Init_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">HMAC_Init_ex </div>
+        <div class="fn-sig">rsi = raw HMAC key bytes (SECRET)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">12 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034 · 3 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rsi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r15</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="HMAC">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">HMAC </div>
+        <div class="fn-sig">HMAC(const EVP_MD *evp_md, const void *key, int key_len, ...)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">8 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe2034</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__stack_chk_fail@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__stack_chk_fail@plt</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe1ff4</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rsi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="EVP_MAC_init">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_MAC_init </div>
+        <div class="fn-sig">rsi = raw MAC key bytes (SECRET) — covers CMAC, GMAC, Poly1305, SipHash, etc.</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rsi</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">8 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0x1cf1a4</div>
+          <div class="dispatch-instr">call/jmp *%rax</div><div class="dispatch-note">register-indirect dispatch via <code>%rax</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe1ff4</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rax</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">2</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rsi</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div></div><div class="tier-section t3"><div class="tier-header"><span class="tier-badge">Tier 3</span><h2>Bulk cipher keys — confidentiality of traffic</h2></div>
+  <div class="gadget-card" id="EVP_CipherInit_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_CipherInit_ex </div>
+        <div class="fn-sig">EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, type, impl, const unsigned char *key, iv, enc)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rcx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">9 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rcx</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">r13</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="EVP_EncryptInit_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_EncryptInit_ex </div>
+        <div class="fn-sig">EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, type, impl, const unsigned char *key, iv)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rcx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">4 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rcx</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="EVP_DecryptInit_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_DecryptInit_ex </div>
+        <div class="fn-sig">EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, type, impl, const unsigned char *key, iv)</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rcx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">4 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1ff4</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:__errno_location@plt]</div><div class="dispatch-note">PLT indirect jump — <code>__errno_location@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">rbx</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">rcx</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr><tr><td><span class="reg-name">rdi</span></td><td><span class="reg-source">derived/propagated</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Secret propagated by the compiler into this register, live at dispatch.</td></tr></table></div>
+    </div></div>
+  </div></div><div class="tier-section t4"><div class="tier-header"><span class="tier-badge">Tier 4</span><h2>Raw private-key import</h2></div>
+  <div class="gadget-card" id="EVP_PKEY_new_raw_private_key">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_PKEY_new_raw_private_key </div>
+        <div class="fn-sig">rdx = raw private key bytes (SECRET) — covers all modern curves</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rdx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">10 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0x1f24a1</div>
+          <div class="dispatch-instr">call/jmp *%rax</div><div class="dispatch-note">register-indirect dispatch via <code>%rax</code> · rep. build gcc -O2</div></div><div class="dispatch-box"><div class="dispatch-label">Dispatch #2 @ 0xe1c24 · 2 paths</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:malloc@plt]</div><div class="dispatch-note">PLT indirect jump — <code>malloc@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r9</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r14</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div>
+  <div class="gadget-card" id="EVP_PKEY_new_raw_private_key_ex">
+    <div class="card-top" onclick="toggle(this)">
+      <div style="flex:1"><div class="fn-name">EVP_PKEY_new_raw_private_key_ex </div>
+        <div class="fn-sig">rcx = raw private key bytes (SECRET)  [note: _ex adds libctx+keytype+propq, shifting key to 4th arg]</div>
+        <div style="margin-top:8px"><span class="secret-pill"><span class="reg">rcx</span><span class="arrow">→</span><span class="desc">seeded secret</span></span></div></div>
+      <div class="card-meta"><div class="build-badges"><span class="build-badge bb-O0 active">O0</span><span class="build-badge bb-O1 active">O1</span><span class="build-badge bb-O2 active">O2</span><span class="build-badge bb-O3 active">O3</span></div>
+        <span class="gcount">5 gadgets · 4/4</span><span class="expand-icon">▼</span></div>
+    </div>
+    <div class="card-body"><div class="card-body-inner">
+      <div class="body-col"><h4>Dispatch Sites</h4><div class="dispatch-box"><div class="dispatch-label">Dispatch #1 @ 0xe1d64</div>
+          <div class="dispatch-instr">jmp *LOAD[GOT:strlen@plt]</div><div class="dispatch-note">PLT indirect jump — <code>strlen@plt</code> · rep. build gcc -O2</div></div></div>
+      <div class="body-col"><h4>Live Secret Registers at Dispatch</h4>
+        <table class="reg-table"><tr><th>Reg</th><th>Source</th><th>Depth</th><th>Meaning</th></tr><tr><td><span class="reg-name">r9</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr><tr><td><span class="reg-name">r14</span></td><td><span class="reg-source">seeded arg</span></td><td><span class="reg-depth">1</span></td><td class="reg-meaning">Pre-seeded secret argument at entry.</td></tr></table></div>
+    </div></div>
+  </div></div>
+<div class="tier-section"><div class="tier-header"><span class="tier-badge" style="background:#21253a;color:#94a3b8">Matrix</span><h2>Coverage across GCC O0–O3</h2><span class="tier-desc">cell = gadget count · skip = per-entry timeout</span></div>
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 20px 12px">
+<table class="matrix"><tr><th>Tier</th><th>Function</th><th>O0</th><th>O1</th><th>O2</th><th>O3</th><th>Σ</th></tr><tr><td>T1</td><td class="tc">SRP_Calc_x_ex</td><td class="n">·</td><td class="y">7</td><td class="y">7</td><td class="y">7</td><td>21</td></tr><tr><td>T1</td><td class="tc">PKCS5_PBE_keyivgen_ex</td><td class="y">3</td><td class="y">5</td><td class="y">5</td><td class="y">5</td><td>18</td></tr><tr><td>T1</td><td class="tc">SRP_Calc_x</td><td class="n">·</td><td class="y">5</td><td class="y">5</td><td class="y">5</td><td>15</td></tr><tr><td>T1</td><td class="tc">PKCS12_gen_mac</td><td class="y">3</td><td class="y">3</td><td class="y">3</td><td class="y">4</td><td>13</td></tr><tr><td>T1</td><td class="tc">PKCS5_PBE_keyivgen</td><td class="y">1</td><td class="y">3</td><td class="y">3</td><td class="y">3</td><td>10</td></tr><tr><td>T1</td><td class="tc">CMS_decrypt_set1_password</td><td class="y">1</td><td class="y">3</td><td class="y">3</td><td class="y">3</td><td>10</td></tr><tr><td>T1</td><td class="tc">EVP_PBE_CipherInit</td><td class="y">1</td><td class="y">3</td><td class="y">2</td><td class="y">3</td><td>9</td></tr><tr><td>T1</td><td class="tc">EVP_PBE_CipherInit_ex</td><td class="y">1</td><td class="y">3</td><td class="y">2</td><td class="y">3</td><td>9</td></tr><tr><td>T1</td><td class="tc">PKCS5_PBKDF2_HMAC</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td>8</td></tr><tr><td>T1</td><td class="tc">PKCS12_key_gen_asc_ex</td><td class="y">1</td><td class="y">2</td><td class="y">3</td><td class="y">2</td><td>8</td></tr><tr><td>T1</td><td class="tc">PKCS8_encrypt</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td>8</td></tr><tr><td>T1</td><td class="tc">PKCS8_encrypt_ex</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td>8</td></tr><tr><td>T1</td><td class="tc">PKCS12_key_gen_asc</td><td class="y">1</td><td class="y">1</td><td class="y">2</td><td class="y">2</td><td>6</td></tr><tr><td>T1</td><td class="tc">PKCS12_key_gen_utf8</td><td class="y">1</td><td class="y">1</td><td class="y">2</td><td class="y">2</td><td>6</td></tr><tr><td>T1</td><td class="tc">PKCS12_key_gen_utf8_ex</td><td class="y">1</td><td class="y">1</td><td class="y">2</td><td class="y">2</td><td>6</td></tr><tr><td>T1</td><td class="tc">PKCS12_key_gen_uni_ex</td><td class="y">1</td><td class="n">·</td><td class="y">1</td><td class="y">4</td><td>6</td></tr><tr><td>T1</td><td class="tc">EVP_PBE_scrypt</td><td class="y">2</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td>5</td></tr><tr><td>T1</td><td class="tc">EVP_PBE_scrypt_ex</td><td class="y">2</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td>5</td></tr><tr><td>T1</td><td class="tc">PKCS12_key_gen_uni</td><td class="y">1</td><td class="n">·</td><td class="y">1</td><td class="y">2</td><td>4</td></tr><tr><td>T1</td><td class="tc">SRP_create_verifier_ex</td><td class="n">·</td><td class="y">1</td><td class="y">1</td><td class="y">2</td><td>4</td></tr><tr><td>T1</td><td class="tc">DES_string_to_key</td><td class="n">·</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td>3</td></tr><tr><td>T1</td><td class="tc">DES_string_to_2keys</td><td class="n">·</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td>3</td></tr><tr><td>T1</td><td class="tc">SRP_create_verifier_BN</td><td class="n">·</td><td class="y">3</td><td class="n">·</td><td class="n">·</td><td>3</td></tr><tr><td>T1</td><td class="tc">SRP_create_verifier_BN_ex</td><td class="n">·</td><td class="y">3</td><td class="n">·</td><td class="n">·</td><td>3</td></tr><tr><td>T1</td><td class="tc">SRP_create_verifier</td><td class="n">·</td><td class="n">·</td><td class="n">·</td><td class="y">1</td><td>1</td></tr><tr><td>T2</td><td class="tc">HMAC_Init_ex</td><td class="y">3</td><td class="y">3</td><td class="y">3</td><td class="y">3</td><td>12</td></tr><tr><td>T2</td><td class="tc">HMAC_Init</td><td class="y">3</td><td class="y">3</td><td class="y">3</td><td class="y">3</td><td>12</td></tr><tr><td>T2</td><td class="tc">HMAC</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td>8</td></tr><tr><td>T2</td><td class="tc">EVP_MAC_init</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td>8</td></tr><tr><td>T3</td><td class="tc">EVP_CipherInit_ex</td><td class="y">3</td><td class="y">2</td><td class="y">2</td><td class="y">2</td><td>9</td></tr><tr><td>T3</td><td class="tc">EVP_EncryptInit_ex</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td>4</td></tr><tr><td>T3</td><td class="tc">EVP_DecryptInit_ex</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td>4</td></tr><tr><td>T4</td><td class="tc">EVP_PKEY_new_raw_private_key</td><td class="y">1</td><td class="y">3</td><td class="y">3</td><td class="y">3</td><td>10</td></tr><tr><td>T4</td><td class="tc">EVP_PKEY_new_raw_private_key_ex</td><td class="y">1</td><td class="y">1</td><td class="y">1</td><td class="y">2</td><td>5</td></tr></table></div></div>
+</div>
+<footer>InSpectre SAD analysis of OpenSSL <code>libcrypto.so.3</code> · GCC O0–O3 · <b>MaxBB=10</b>, Z3Timeout=10s, per-entry cap 300s · Template: <code>openssl_secret_regs_raw_only.csv</code> (48 functions)</footer>
+<script>function toggle(h){h.closest('.gadget-card').classList.toggle('open');}</script>
+</body></html>

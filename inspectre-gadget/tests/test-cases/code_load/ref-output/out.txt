@@ -1,0 +1,93 @@
+
+gadget:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004000000 <code_load>:
+ 4000000:	49 83 f8 00          	cmp    r8,0x0
+ 4000004:	74 16                	je     400001c <trans1>
+ 4000006:	49 83 f8 01          	cmp    r8,0x1
+ 400000a:	74 15                	je     4000021 <trans2>
+ 400000c:	49 83 f8 02          	cmp    r8,0x2
+ 4000010:	74 1a                	je     400002c <trans3>
+
+0000000004000012 <trans0>:
+ 4000012:	48 0f b7 37          	movzx  rsi,WORD PTR [rdi]
+ 4000016:	48 8d 04 32          	lea    rax,[rdx+rsi*1]
+ 400001a:	ff e0                	jmp    rax
+
+000000000400001c <trans1>:
+ 400001c:	48 8b 07             	mov    rax,QWORD PTR [rdi]
+ 400001f:	ff e0                	jmp    rax
+
+0000000004000021 <trans2>:
+ 4000021:	48 0f b7 07          	movzx  rax,WORD PTR [rdi]
+ 4000025:	ff 24 c5 00 00 00 81 	jmp    QWORD PTR [rax*8-0x7f000000]
+
+000000000400002c <trans3>:
+ 400002c:	ff 27                	jmp    QWORD PTR [rdi]
+
+== SCANNER ==
+[MAIN]  Loading angr project...
+[MAIN]  Analyzing gadget at address 0x4000000...
+[AnalysisMAIN]  Analyzing TFP @0x400001a: <BV64 rdx + (0#48 .. LOAD_16[<BV64 rdi>]_20)>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped CSV to tfp.csv
+[AnalysisMAIN]  Analyzing TRANS @0x400001a: <BV64 rdx + (0#48 .. LOAD_16[<BV64 rdi>]_20)>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped properties to gadgets.csv
+[AnalysisMAIN]  Analyzing TFP @0x400002c: <BV64 LOAD_64[<BV64 rdi>]_21>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped CSV to tfp.csv
+[AnalysisMAIN]  Analyzing TRANS @0x400002c: <BV64 LOAD_64[<BV64 rdi>]_21>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped properties to gadgets.csv
+[AnalysisMAIN]  Analyzing TRANS @0x4000025: <BV64 0xffffffff81000000 + (0#45 .. (0#3 .. LOAD_16[<BV64 rdi>]_22) << 0x3)>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped properties to gadgets.csv
+[AnalysisMAIN]  Analyzing TFP @0x4000025: <BV64 LOAD_64[<BV64 ((0#48 .. LOAD_16[<BV64 rdi>]_22) << 0x3) + 0xffffffff81000000>]_23>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped CSV to tfp.csv
+[AnalysisMAIN]  Analyzing TRANS @0x4000025: <BV64 LOAD_64[<BV64 ((0#48 .. LOAD_16[<BV64 rdi>]_22) << 0x3) + 0xffffffff81000000>]_23>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped properties to gadgets.csv
+[AnalysisMAIN]  Analyzing TFP @0x400001f: <BV64 LOAD_64[<BV64 rdi>]_24>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped CSV to tfp.csv
+[AnalysisMAIN]  Analyzing TRANS @0x400001f: <BV64 LOAD_64[<BV64 rdi>]_24>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped properties to gadgets.csv
+[MAIN]  Found 5 potential transmissions.
+[MAIN]  Found 4 potential tainted function pointers.
+[MAIN]  Found 0 potential secret dependent branches.
+[MAIN]  Outputted 5 transmissions.
+[MAIN]  Outputted 4 tainted function pointers.
+[MAIN]  Outputted 0 secret dependent branches.
+
+== REASONER TRANSMISSION ==
+Total 0 Secret Dependent Branches (not reasoned)
+[-] Imported 5 gadgets
+[-] Performing exploitability analysis...
+Found 2 exploitable gadgets!
+[-] Performing exploitability analysis including branch constraints...
+Found 2 exploitable gadgets!
+[-] Performing exploitability analysis assuming the SLAM covert channel...
+Found 4 exploitable gadgets!
+[-] Saving to gadgets-reasoned.csv
+[-] Done!
+
+== REASONER DISPATCH ==
+[-] Imported 4 gadgets
+[-] Enriching with extra info...
+[-] Performing exploitability analysis...
+   [+] Found 4 exploitable TFPs!
+   [+] Found 4 (unique PCs) TFPs with at least one sufficiently controlled register!
+   [+] Found 1 (unique entry point) TFPs with at least one sufficiently controlled register!
+[-] Enriching with extra info including branch constraints...
+[-] Performing exploitability analysis with branches...
+   [+] Found 4 exploitable TFPs with branches!
+   [+] Found 4 (unique PCs) TFPs with at least one sufficiently controlled register!
+   [+] Found 1 (unique entry point) TFPs with at least one sufficiently controlled register!
+[-] Saving to tfp-reasoned.csv
+[-] Done!

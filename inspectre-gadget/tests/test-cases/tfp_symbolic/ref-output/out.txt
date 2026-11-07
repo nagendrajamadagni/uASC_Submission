@@ -1,0 +1,73 @@
+
+gadget:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004000000 <tfp_symbolic>:
+ 4000000:	49 83 ff 00          	cmp    r15,0x0
+ 4000004:	74 06                	je     400000c <tfp1>
+
+0000000004000006 <tfp0>:
+ 4000006:	48 8b 04 31          	mov    rax,QWORD PTR [rcx+rsi*1]
+ 400000a:	ff d0                	call   rax
+
+000000000400000c <tfp1>:
+ 400000c:	00 3f                	add    BYTE PTR [rdi],bh
+ 400000e:	0f 43 c1             	cmovae eax,ecx
+ 4000011:	ff a0 c0 42 49 82    	jmp    QWORD PTR [rax-0x7db6bd40]
+
+== SCANNER ==
+[MAIN]  Loading angr project...
+[MAIN]  Analyzing gadget at address 0x4000000...
+[AnalysisMAIN]  Analyzing TFP @0x400000a: <BV64 LOAD_64[<BV64 rcx + rsi>]_20>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped CSV to tfp.csv
+[AnalysisMAIN]  Analyzing TRANS @0x400000a: <BV64 LOAD_64[<BV64 rcx + rsi>]_20>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped properties to gadgets.csv
+[AnalysisMAIN]  Analyzing TFP @0x4000011: <BV64 LOAD_64[<BV64 (0#32 .. rax[31:0]) + 0xffffffff824942c0>]_25>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped CSV to tfp.csv
+[AnalysisMAIN]  Analyzing TRANS @0x4000011: <BV64 LOAD_64[<BV64 (0#32 .. rax[31:0]) + 0xffffffff824942c0>]_25>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped properties to gadgets.csv
+[AnalysisMAIN]  Analyzing TFP @0x4000011: <BV64 LOAD_64[<BV64 (0#32 .. rcx[31:0]) + 0xffffffff824942c0>]_27>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped CSV to tfp.csv
+[AnalysisMAIN]  Analyzing TRANS @0x4000011: <BV64 LOAD_64[<BV64 (0#32 .. rcx[31:0]) + 0xffffffff824942c0>]_27>
+[AnalysisMAIN]  Dumped annotated ASM to asm
+[AnalysisMAIN]  Dumped properties to gadgets.csv
+[MAIN]  Found 3 potential transmissions.
+[MAIN]  Found 3 potential tainted function pointers.
+[MAIN]  Found 0 potential secret dependent branches.
+[MAIN]  Outputted 3 transmissions.
+[MAIN]  Outputted 3 tainted function pointers.
+[MAIN]  Outputted 0 secret dependent branches.
+
+== REASONER TRANSMISSION ==
+Total 0 Secret Dependent Branches (not reasoned)
+[-] Imported 3 gadgets
+[-] Performing exploitability analysis...
+Found 0 exploitable gadgets!
+[-] Performing exploitability analysis including branch constraints...
+Found 0 exploitable gadgets!
+[-] Performing exploitability analysis assuming the SLAM covert channel...
+Found 3 exploitable gadgets!
+[-] Saving to gadgets-reasoned.csv
+[-] Done!
+
+== REASONER DISPATCH ==
+[-] Imported 3 gadgets
+[-] Enriching with extra info...
+[-] Performing exploitability analysis...
+   [+] Found 3 exploitable TFPs!
+   [+] Found 2 (unique PCs) TFPs with at least one sufficiently controlled register!
+   [+] Found 1 (unique entry point) TFPs with at least one sufficiently controlled register!
+[-] Enriching with extra info including branch constraints...
+[-] Performing exploitability analysis with branches...
+   [+] Found 3 exploitable TFPs with branches!
+   [+] Found 2 (unique PCs) TFPs with at least one sufficiently controlled register!
+   [+] Found 1 (unique entry point) TFPs with at least one sufficiently controlled register!
+[-] Saving to tfp-reasoned.csv
+[-] Done!

@@ -1,0 +1,480 @@
+SELECT
+    pc,
+    rax_reg,
+    rax_expr,
+    rax_control,
+    rax_branches,
+    rax_constraints,
+    rax_requirements_regs,
+    rax_requirements_indirect_regs,
+    rax_requirements_direct_regs,
+    rax_requirements_mem,
+    rax_requirements_const_mem,
+    rax_range_min,
+    rax_range_max,
+    rax_range_window,
+    rax_range_stride,
+    rax_range_and_mask,
+    rax_range_or_mask,
+    rax_range_exact,
+    rax_controlled_range_min,
+    rax_controlled_range_max,
+    rax_controlled_range_window,
+    rax_controlled_range_stride,
+    rax_controlled_range_and_mask,
+    rax_controlled_range_or_mask,
+    rax_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    rbx_reg,
+    rbx_expr,
+    rbx_control,
+    rbx_branches,
+    rbx_constraints,
+    rbx_requirements_regs,
+    rbx_requirements_indirect_regs,
+    rbx_requirements_direct_regs,
+    rbx_requirements_mem,
+    rbx_requirements_const_mem,
+    rbx_range_min,
+    rbx_range_max,
+    rbx_range_window,
+    rbx_range_stride,
+    rbx_range_and_mask,
+    rbx_range_or_mask,
+    rbx_range_exact,
+    rbx_controlled_range_min,
+    rbx_controlled_range_max,
+    rbx_controlled_range_window,
+    rbx_controlled_range_stride,
+    rbx_controlled_range_and_mask,
+    rbx_controlled_range_or_mask,
+    rbx_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    rcx_reg,
+    rcx_expr,
+    rcx_control,
+    rcx_branches,
+    rcx_constraints,
+    rcx_requirements_regs,
+    rcx_requirements_indirect_regs,
+    rcx_requirements_direct_regs,
+    rcx_requirements_mem,
+    rcx_requirements_const_mem,
+    rcx_range_min,
+    rcx_range_max,
+    rcx_range_window,
+    rcx_range_stride,
+    rcx_range_and_mask,
+    rcx_range_or_mask,
+    rcx_range_exact,
+    rcx_controlled_range_min,
+    rcx_controlled_range_max,
+    rcx_controlled_range_window,
+    rcx_controlled_range_stride,
+    rcx_controlled_range_and_mask,
+    rcx_controlled_range_or_mask,
+    rcx_controlled_range_exact
+
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    rdx_reg,
+    rdx_expr,
+    rdx_control,
+    rdx_branches,
+    rdx_constraints,
+    rdx_requirements_regs,
+    rdx_requirements_indirect_regs,
+    rdx_requirements_direct_regs,
+    rdx_requirements_mem,
+    rdx_requirements_const_mem,
+    rdx_range_min,
+    rdx_range_max,
+    rdx_range_window,
+    rdx_range_stride,
+    rdx_range_and_mask,
+    rdx_range_or_mask,
+    rdx_range_exact,
+    rdx_controlled_range_min,
+    rdx_controlled_range_max,
+    rdx_controlled_range_window,
+    rdx_controlled_range_stride,
+    rdx_controlled_range_and_mask,
+    rdx_controlled_range_or_mask,
+    rdx_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    rsi_reg,
+    rsi_expr,
+    rsi_control,
+    rsi_branches,
+    rsi_constraints,
+    rsi_requirements_regs,
+    rsi_requirements_indirect_regs,
+    rsi_requirements_direct_regs,
+    rsi_requirements_mem,
+    rsi_requirements_const_mem,
+    rsi_range_min,
+    rsi_range_max,
+    rsi_range_window,
+    rsi_range_stride,
+    rsi_range_and_mask,
+    rsi_range_or_mask,
+    rsi_range_exact,
+    rsi_controlled_range_min,
+    rsi_controlled_range_max,
+    rsi_controlled_range_window,
+    rsi_controlled_range_stride,
+    rsi_controlled_range_and_mask,
+    rsi_controlled_range_or_mask,
+    rsi_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    rdi_reg,
+    rdi_expr,
+    rdi_control,
+    rdi_branches,
+    rdi_constraints,
+    rdi_requirements_regs,
+    rdi_requirements_indirect_regs,
+    rdi_requirements_direct_regs,
+    rdi_requirements_mem,
+    rdx_requirements_const_mem,
+    rdi_range_min,
+    rdi_range_max,
+    rdi_range_window,
+    rdi_range_stride,
+    rdi_range_and_mask,
+    rdi_range_or_mask,
+    rdi_range_exact,
+    rdi_controlled_range_min,
+    rdi_controlled_range_max,
+    rdi_controlled_range_window,
+    rdi_controlled_range_stride,
+    rdi_controlled_range_and_mask,
+    rdi_controlled_range_or_mask,
+    rdi_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    rbp_reg,
+    rbp_expr,
+    rbp_control,
+    rbp_branches,
+    rbp_constraints,
+    rbp_requirements_regs,
+    rbp_requirements_indirect_regs,
+    rbp_requirements_direct_regs,
+    rbp_requirements_mem,
+    rbp_requirements_const_mem,
+    rbp_range_min,
+    rbp_range_max,
+    rbp_range_window,
+    rbp_range_stride,
+    rbp_range_and_mask,
+    rbp_range_or_mask,
+    rbp_range_exact,
+    rbp_controlled_range_min,
+    rbp_controlled_range_max,
+    rbp_controlled_range_window,
+    rbp_controlled_range_stride,
+    rbp_controlled_range_and_mask,
+    rbp_controlled_range_or_mask,
+    rbp_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    rsp_reg,
+    rsp_expr,
+    rsp_control,
+    rsp_branches,
+    rsp_constraints,
+    rsp_requirements_regs,
+    rsp_requirements_indirect_regs,
+    rsp_requirements_direct_regs,
+    rsp_requirements_mem,
+    rsp_requirements_const_mem,
+    rsp_range_min,
+    rsp_range_max,
+    rsp_range_window,
+    rsp_range_stride,
+    rsp_range_and_mask,
+    rsp_range_or_mask,
+    rsp_range_exact,
+    rsp_controlled_range_min,
+    rsp_controlled_range_max,
+    rsp_controlled_range_window,
+    rsp_controlled_range_stride,
+    rsp_controlled_range_and_mask,
+    rsp_controlled_range_or_mask,
+    rsp_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    r8_reg,
+    r8_expr,
+    r8_control,
+    r8_branches,
+    r8_constraints,
+    r8_requirements_regs,
+    r8_requirements_indirect_regs,
+    r8_requirements_direct_regs,
+    r8_requirements_mem,
+    r8_requirements_const_mem,
+    r8_range_min,
+    r8_range_max,
+    r8_range_window,
+    r8_range_stride,
+    r8_range_and_mask,
+    r8_range_or_mask,
+    r8_range_exact,
+    r8_controlled_range_min,
+    r8_controlled_range_max,
+    r8_controlled_range_window,
+    r8_controlled_range_stride,
+    r8_controlled_range_and_mask,
+    r8_controlled_range_or_mask,
+    r8_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    r9_reg,
+    r9_expr,
+    r9_control,
+    r9_branches,
+    r9_constraints,
+    r9_requirements_regs,
+    r9_requirements_indirect_regs,
+    r9_requirements_direct_regs,
+    r9_requirements_mem,
+    r9_requirements_const_mem,
+    r9_range_min,
+    r9_range_max,
+    r9_range_window,
+    r9_range_stride,
+    r9_range_and_mask,
+    r9_range_or_mask,
+    r9_range_exact,
+    r9_controlled_range_min,
+    r9_controlled_range_max,
+    r9_controlled_range_window,
+    r9_controlled_range_stride,
+    r9_controlled_range_and_mask,
+    r9_controlled_range_or_mask,
+    r9_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    r10_reg,
+    r10_expr,
+    r10_control,
+    r10_branches,
+    r10_constraints,
+    r10_requirements_regs,
+    r10_requirements_indirect_regs,
+    r10_requirements_direct_regs,
+    r10_requirements_mem,
+    r10_requirements_const_mem,
+    r10_range_min,
+    r10_range_max,
+    r10_range_window,
+    r10_range_stride,
+    r10_range_and_mask,
+    r10_range_or_mask,
+    r10_range_exact,
+    r10_controlled_range_min,
+    r10_controlled_range_max,
+    r10_controlled_range_window,
+    r10_controlled_range_stride,
+    r10_controlled_range_and_mask,
+    r10_controlled_range_or_mask,
+    r10_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    r11_reg,
+    r11_expr,
+    r11_control,
+    r11_branches,
+    r11_constraints,
+    r11_requirements_regs,
+    r11_requirements_indirect_regs,
+    r11_requirements_direct_regs,
+    r11_requirements_mem,
+    r11_requirements_const_mem,
+    r11_range_min,
+    r11_range_max,
+    r11_range_window,
+    r11_range_stride,
+    r11_range_and_mask,
+    r11_range_or_mask,
+    r11_range_exact,
+    r11_controlled_range_min,
+    r11_controlled_range_max,
+    r11_controlled_range_window,
+    r11_controlled_range_stride,
+    r11_controlled_range_and_mask,
+    r11_controlled_range_or_mask,
+    r11_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    r12_reg,
+    r12_expr,
+    r12_control,
+    r12_branches,
+    r12_constraints,
+    r12_requirements_regs,
+    r12_requirements_indirect_regs,
+    r12_requirements_direct_regs,
+    r12_requirements_mem,
+    r12_requirements_const_mem,
+    r12_range_min,
+    r12_range_max,
+    r12_range_window,
+    r12_range_stride,
+    r12_range_and_mask,
+    r12_range_or_mask,
+    r12_range_exact,
+    r12_controlled_range_min,
+    r12_controlled_range_max,
+    r12_controlled_range_window,
+    r12_controlled_range_stride,
+    r12_controlled_range_and_mask,
+    r12_controlled_range_or_mask,
+    r12_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    r13_reg,
+    r13_expr,
+    r13_control,
+    r13_branches,
+    r13_constraints,
+    r13_requirements_regs,
+    r13_requirements_indirect_regs,
+    r13_requirements_direct_regs,
+    r13_requirements_mem,
+    r13_requirements_const_mem,
+    r13_range_min,
+    r13_range_max,
+    r13_range_window,
+    r13_range_stride,
+    r13_range_and_mask,
+    r13_range_or_mask,
+    r13_range_exact,
+    r13_controlled_range_min,
+    r13_controlled_range_max,
+    r13_controlled_range_window,
+    r13_controlled_range_stride,
+    r13_controlled_range_and_mask,
+    r13_controlled_range_or_mask,
+    r13_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    r14_reg,
+    r14_expr,
+    r14_control,
+    r14_branches,
+    r14_constraints,
+    r14_requirements_regs,
+    r14_requirements_indirect_regs,
+    r14_requirements_direct_regs,
+    r14_requirements_mem,
+    r14_requirements_const_mem,
+    r14_range_min,
+    r14_range_max,
+    r14_range_window,
+    r14_range_stride,
+    r14_range_and_mask,
+    r14_range_or_mask,
+    r14_range_exact,
+    r14_controlled_range_min,
+    r14_controlled_range_max,
+    r14_controlled_range_window,
+    r14_controlled_range_stride,
+    r14_controlled_range_and_mask,
+    r14_controlled_range_or_mask,
+    r14_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
+
+SELECT
+    pc,
+    r15_reg,
+    r15_expr,
+    r15_control,
+    r15_branches,
+    r15_constraints,
+    r15_requirements_regs,
+    r15_requirements_indirect_regs,
+    r15_requirements_direct_regs,
+    r15_requirements_mem,
+    r15_requirements_const_mem,
+    r15_range_min,
+    r15_range_max,
+    r15_range_window,
+    r15_range_stride,
+    r15_range_and_mask,
+    r15_range_or_mask,
+    r15_range_exact,
+    r15_controlled_range_min,
+    r15_controlled_range_max,
+    r15_controlled_range_window,
+    r15_controlled_range_stride,
+    r15_controlled_range_and_mask,
+    r15_controlled_range_or_mask,
+    r15_controlled_range_exact
+FROM
+    tfps
+order by pc, expr, constraints, branches;
